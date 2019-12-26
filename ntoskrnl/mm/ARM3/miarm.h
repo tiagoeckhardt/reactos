@@ -729,6 +729,22 @@ MiIsUserPte(PVOID Address)
 }
 #endif
 
+FORCEINLINE
+BOOLEAN
+MiIsUserAddressOrPageTable(PVOID Address)
+{
+    return ((Address <= MmHighestUserAddress) // MM_HIGHEST_USER_ADDRESS
+            || MiIsUserPte(Address)
+            || MiIsUserPde(Address)
+#if (_MI_PAGING_LEVELS >= 3)
+            || MiIsUserPpe(Address)
+#endif
+#if (_MI_PAGING_LEVELS >= 4)
+            || MiIsUserPxe(Address)
+#endif
+            );
+}
+
 //
 // Figures out the hardware bits for a PTE
 //
@@ -1670,6 +1686,50 @@ MiReferenceUnusedPageAndBumpLockCount(IN PMMPFN Pfn1)
     }
 }
 
+#ifdef _M_AMD64
+FORCEINLINE
+VOID
+MiIncrementPageTableReferences(IN PVOID Address)
+{
+    PULONG RefCount;
+    PMMPDE PointerPde = MiAddressToPde(Address);
+
+    NT_ASSERT(PointerPde->u.Hard.Valid);
+    RefCount = &MI_PFN_ELEMENT(PointerPde->u.Hard.PageFrameNumber)->UsedPageTableEntries;
+
+    *RefCount += 1;
+    ASSERT(*RefCount <= PTE_PER_PAGE);
+}
+
+FORCEINLINE
+USHORT
+MiDecrementPageTableReferences(IN PVOID Address)
+{
+    PULONG RefCount;
+    PMMPDE PointerPde = MiAddressToPde(Address);
+
+    NT_ASSERT(PointerPde->u.Hard.Valid);
+    RefCount = &MI_PFN_ELEMENT(PointerPde->u.Hard.PageFrameNumber)->UsedPageTableEntries;
+
+    *RefCount -= 1;
+    ASSERT(*RefCount < PTE_PER_PAGE);
+
+    return *RefCount;
+}
+
+FORCEINLINE
+USHORT
+MiQueryPageTableReferences(IN PVOID Address)
+{
+    PULONG RefCount;
+    PMMPTE PointerPte = MiAddressToPde(Address);
+
+    NT_ASSERT(PointerPte->u.Hard.Valid);
+    RefCount = &MI_PFN_ELEMENT(PointerPte->u.Hard.PageFrameNumber)->UsedPageTableEntries;
+
+    return *RefCount;
+}
+#else
 FORCEINLINE
 VOID
 MiIncrementPageTableReferences(IN PVOID Address)
@@ -1683,7 +1743,7 @@ MiIncrementPageTableReferences(IN PVOID Address)
 }
 
 FORCEINLINE
-VOID
+USHORT
 MiDecrementPageTableReferences(IN PVOID Address)
 {
     PUSHORT RefCount;
@@ -1692,6 +1752,7 @@ MiDecrementPageTableReferences(IN PVOID Address)
 
     *RefCount -= 1;
     ASSERT(*RefCount < PTE_PER_PAGE);
+    return *RefCount;
 }
 
 FORCEINLINE
@@ -1704,6 +1765,7 @@ MiQueryPageTableReferences(IN PVOID Address)
 
     return *RefCount;
 }
+#endif
 
 INIT_FUNCTION
 BOOLEAN
