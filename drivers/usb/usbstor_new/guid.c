@@ -1,5 +1,6 @@
 /* DO NOT USE THE PRECOMPILED HEADER FOR THIS FILE! */
 
+#define __BROKEN__
 #include <ntdef.h>
 #include <miniport.h>
 #include <usb.h>

@@ -9,6 +9,9 @@
  *              Johannes Anderwald (johannes.anderwald@reactos.org)
  */
 
+#define INITGUID
+#include <usbbusif.h>
+
 #include "usbstor.h"
 
 #define NDEBUG
