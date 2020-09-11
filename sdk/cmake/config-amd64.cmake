@@ -23,14 +23,14 @@ set(LTCG FALSE CACHE BOOL
 set(DBG TRUE CACHE BOOL
 "Whether to compile for debugging.")
 
-set(KDBG TRUE CACHE BOOL
+set(KDBG FALSE CACHE BOOL
 "Whether to compile in the integrated kernel debugger.")
 
 set(GDB FALSE CACHE BOOL
 "Whether to compile for debugging with GDB.
 If you don't use GDB, don't enable this.")
 
-set(_WINKD_ FALSE CACHE BOOL
+set(_WINKD_ TRUE CACHE BOOL
 "Whether to compile with the KD protocol.")
 
 set(_ELF_ FALSE CACHE BOOL
